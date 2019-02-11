@@ -1,8 +1,7 @@
-package jeuprojet;
+﻿package jeuprojet;
 
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class MasterMindGame extends Jeux {
@@ -14,12 +13,19 @@ public class MasterMindGame extends Jeux {
 	private static int tryNber = 0;
 	private static int tryMax = 20;
 
+	//static String resultat;
+	static int badPlaced;
+	static int wellPlaced;
 
 	// Parametrage de la combinaison
 	static int size = 4;
 	static int maxDigit = 9;
 
 	boolean isNumberValid;
+	
+	String[] validDigits = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+    String lastMove;
+    ArrayList<String> possibleTokens;
 
 
 	@Override
@@ -28,17 +34,18 @@ public class MasterMindGame extends Jeux {
 		int secretCode = 0;
 		int [] userInputTab;
 		int[] tabSecretCode = new int[size];
-
+		String resultat;
 		// 	Presentation du jeu
 		gamePresentation(size, maxDigit, tryMax);
 
 		// Secret Code
 		putCombinaison(tabSecretCode, size, maxDigit);
 
+
 		// Convertir le tableau code secret en un int
 		for(int i = 0; i < tabSecretCode.length; i++) 
 			secretCode += Math.pow(10,i) * tabSecretCode[tabSecretCode.length - i - 1];
-
+		System.out.println(secretCode);
 		do {
 			tryNber++;
 			do {
@@ -51,7 +58,8 @@ public class MasterMindGame extends Jeux {
 			userInputTab = convertDigit(userInput);
 
 			// Comparaison
-			compareTab(userInputTab, tabSecretCode);
+			resultat = compareTab(userInputTab, tabSecretCode);
+			System.out.println(resultat);
 
 			// Tests fin de boucle
 			if (secretCode == userInput ) {
@@ -92,76 +100,44 @@ public class MasterMindGame extends Jeux {
 	@Override
 	public void defenseur() {
 		int secretCode;
+		String computerInput;
 
 		// Code secret de l'utilisateur
-		do {
 			// Proposition de l'utilisateur
 			System.out.println("Veuillez définir un code secret : ");
-			secretCode = getClavierInt();
-		} while (!isNumberValid);
-
-		int result = 0;
-
-		String userTip = null;
-		System.out.println("(Combinaison secrète : " + secretCode + ")");
-
-		//a personnaliser pour savoir la tranche de chiffre de la combinaison
-		String[] inputs = {"1", "2", "3", "4", "5", "6"};
-		
-		// le nombre total de toutes les combinaisons
-		int total = (int) Math.pow(inputs.length, size);
-
-		//on cree une ArrayList pour stocker toutes les combinaisons possibles
-		ArrayList<String[]> allPossibleCombi = new ArrayList<>();
-
-		//les differentes combinaisons
-		int [] index = new int [size];
-		// tous les elements de index equivalent a 0
-		Arrays.fill(index, 0);
-
-		for (int i = 0; i < total; i++)
-		{
+			secretCode = clavier.nextInt();
+			int[] tabSecretCode = convertDigitToTab(secretCode);
 	
-		    String[] subSets = new String[size];
-		    for (int j = 0; j < size; j++)
-		    {
-		        subSets[j] = inputs[index[j]];
-		    }
-		    allPossibleCombi.add(subSets);
-		    if (i != (total - 1))
-		        index = nextIndex (index, size, inputs.length);
-		}
+		System.out.println("(Combinaison secrète : " + secretCode + ")");
 		
-		System.out.println();
-		
-		String computerInput = Arrays.toString(allPossibleCombi.get(0));
-		System.out.println(computerInput);
-		
-		do {
+		ArrayList<String> possibleCombi = AllPossibleCombinaisons();
+		//do {
 			tryNber++;
 			// Proposition d l'ordinateur
+			computerInput = possibleCombi.get(0);
+			System.out.println(" Proposition de l'ordinateur : " + computerInput);
+			String[] computerInputS = computerInput.split(" "); 
+			int[] computerInputTab = new int[computerInputS.length]; 
+			for (int i = 0; i < computerInputTab.length; i++){
+			    computerInputTab[i] = Integer.parseInt(computerInputS[i]); 
+			String resultat = compareTab(tabSecretCode, computerInputTab);
+			System.out.println(String.format("%02x", resultat));
+			}
+		
 			
+			//Tests fin de boucle
+//			for (int i = 0; i <=computerInputTab.length; i++) {
+//			if (computerInputTab[i] == tabSecretCode[i]) {
+//			System.out.println("L'ordinateur a trouvé le code secret " + secretCode + "!");
+//			break; 
+//			}
+//			}
+//			if (tryNber >= tryMax) {
+//			System.out.println("L'ordinateur n'a plus d'essai : la reponse était " + secretCode + "!");
+//			break;
+//			} 
 
-						// Comparaison manuelle utilisateur
-						userTip = clavier.nextLine();
-						System.out.println("Réponse : " + userTip);
-						
-						if (userTip != "40") {
-							allPossibleCombi.remove(0);
-							
-						}
-
-			// Tests fin de boucle
-			if (result == secretCode) {
-				System.out.println("L'ordinateur a trouvé le code secret " + secretCode + "!");
-				break;
-			} 
-			if (tryNber >= tryMax) {
-				System.out.println("L'ordinateur n'a plus d'essai : la reponse était " + secretCode + "!");
-				break;
-			} 
-
-		} while (secretCode != result);
+	//} while (secretCode != computerInput);
 	}
 
 	@Override
@@ -184,9 +160,9 @@ public class MasterMindGame extends Jeux {
 		}
 	}
 
-	public static void compareTab (int [] userInputTab, int [] tabSecretCode) {
-		int wellPlaced = 0;
-		int badPlaced = 0; 
+	public static String compareTab (int [] userInputTab, int [] tabSecretCode) {
+		wellPlaced = 0;
+		badPlaced = 0; 
 		int [] temp =  new  int [4] ;  
 		System.arraycopy(tabSecretCode,  0, temp,  0,  4) ;
 
@@ -196,17 +172,18 @@ public class MasterMindGame extends Jeux {
 			if (tabSecretCode[i] == userInputTab[i]) {
 				wellPlaced++;
 				temp[i] = -1;
-			}
-		}
+				userInputTab[i]= -1;
+			} 
+		} 
 		for (int i = 0; i < tabSecretCode.length; i++) {
 			for (int j = 0; j < tabSecretCode.length; j++) {
-				if (userInputTab[i] == temp[j]) {
+				if (userInputTab[i] == temp[j] && temp[j] != -1) {
 					badPlaced++; 
 					temp[j]= -1;
-				}
+				} 
 			}
 		}
-		System.out.println("Bien place(s) : " + wellPlaced + " , Mal place(s) : " + badPlaced);
+		return String.valueOf(wellPlaced) + String.valueOf(badPlaced);
 	}
 
 
@@ -240,41 +217,35 @@ public class MasterMindGame extends Jeux {
 		return tabInt;
 	}
 
+	
 	/**
-	 * Dychotomie de l'ordinateur qui prend en compte le résultat de la comparaison
+	 * Convertion entier en tableau de chiffre
 	 * 
-	 * @param userTip             : resultat de la comparaison
-	 * @param tabNewComputerInput : ancienne proposition de l'ordinateur
+	 * @param num le nombre à tronquer
 	 * @return
 	 */
-		
-	
-	// Get the index of the next possible combination
-	public static int[] nextIndex (int[] index, int maxLength, int size)
-	{   
-		for (int i = (maxLength - 1); i > 0; i--)
-		{
-			if (index[i] == (size - 1))
-			{
-				index[i] = 0;
-				if(index[i-1] == (size - 1)){
-					continue;
-				}
-				index[i - 1]++;
-				break;
-			}else{
-				index[i]++;
-				break;
-			}
-
+	public int[] convertDigitToTab(int num) {
+		int index = 0;
+		int[] tabInt = new int[size];
+		int digits = (int) Math.log10(num);
+		for (int i = (int) Math.pow(10, digits); i > 0; i /= 10) {
+			tabInt[index] =num / i;
+			num %= i;
+			index++;
 		}
-		return index;
+		return tabInt;
 	}
+	
+	//donne toutes les combinaisons possibles (avec doublons)
+	private ArrayList<String> AllPossibleCombinaisons() {
+        ArrayList<String> combinaison = new ArrayList<String>();
+        for (int d1 = 0; d1 < validDigits.length; d1++)
+            for (int d2 = 0; d2 < validDigits.length; d2++)
+                for (int d3 = 0; d3 < validDigits.length; d3++)
+                    for (int d4 = 0; d4 < validDigits.length; d4++)
+                        {
+         combinaison.add((validDigits[d1].toString() + validDigits[d2].toString() + validDigits[d3].toString() + validDigits[d4].toString()));
+                        }
+        return combinaison;
+    }
 }
-
-
-	
-	
-
-	
-	
